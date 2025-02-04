@@ -6,7 +6,6 @@ import java.time.Instant;
 
 public class ChatMessageRequestDTO {
 
-    @NotNull(message = "Conversation ID cannot be null")
     private Long conversationId;
 
     @NotNull(message = "Sender ID cannot be null")

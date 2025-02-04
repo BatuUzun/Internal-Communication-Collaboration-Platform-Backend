@@ -41,6 +41,9 @@ public class ApiGatewayConfiguration {
 	                .route(p -> p.path("/chat-search/**")
 	                        .uri("lb://chat-search"))
 	                
+	                .route(p -> p.path("/conversation/**")
+	                        .uri("lb://conversation"))
+	                
 	                
 	                .build();
 	    }
