@@ -2,42 +2,52 @@ package com.chat_search.controller;
 
 import java.util.List;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.chat_search.dto.ChatMessageSearchResponseDTO;
+import com.chat_search.dto.ChatLatestMessagesRequestDTO;
+import com.chat_search.dto.ChatSearchByKeywordRequestDTO;
+import com.chat_search.dto.ChatSearchInConversationRequestDTO;
+import com.chat_search.dto.ChatUserConversationDTO;
 import com.chat_search.entity.ChatMessageIndex;
 import com.chat_search.service.ChatSearchService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/chat-search")
 public class ChatSearchController {
 
-    private final ChatSearchService chatSearchService;
+	@Autowired
+    private ChatSearchService chatSearchService;
 
-    public ChatSearchController(ChatSearchService chatSearchService) {
-        this.chatSearchService = chatSearchService;
+	// Fetch messages using cursor-based pagination
+	@PostMapping("/user/conversations")
+	public List<ChatUserConversationDTO> getUserConversations(@RequestParam Long userId) {
+	    return chatSearchService.fetchUserConversations(userId);
+	}
+
+
+    // Search messages globally (cursor-based)
+    @PostMapping("/search")
+    public List<ChatMessageIndex> searchMessages(@Valid @RequestBody ChatSearchByKeywordRequestDTO requestDTO) {
+        return chatSearchService.searchMessagesByKeyword(requestDTO.getUserId(), requestDTO.getKeyword(), requestDTO.getLastSentAt());
     }
 
-    @GetMapping("/conversation/{conversationId}")
-    public List<ChatMessageIndex> getMessagesByConversationId(@PathVariable Long conversationId) {
-        return chatSearchService.searchByConversationId(conversationId);
+    // Search messages inside a conversation (cursor-based)
+    @PostMapping("/conversation/search")
+    public List<ChatMessageIndex> searchMessagesInConversation(@Valid @RequestBody ChatSearchInConversationRequestDTO requestDTO) {
+        return chatSearchService.searchMessagesInConversation(requestDTO.getConversationId(), requestDTO.getKeyword(), requestDTO.getLastSentAt());
     }
 
-    @GetMapping("/keyword")
-    public List<ChatMessageSearchResponseDTO> searchMessagesByKeyword(@RequestParam String keyword) {
-        return chatSearchService.searchByKeyword(keyword).stream()
-                .map(msg -> new ChatMessageSearchResponseDTO(
-                        msg.getConversationId(),
-                        msg.getSenderId(),
-                        msg.getReceiverId(),
-                        msg.getMessage(),
-                        msg.getSentAt()
-                ))
-                .toList();
+    // Fetch latest 20 messages in a conversation (cursor-based pagination)
+    @PostMapping("/conversation/latest")
+    public List<ChatMessageIndex> getLatestMessagesByConversationId(@Valid @RequestBody ChatLatestMessagesRequestDTO requestDTO) {
+        return chatSearchService.fetchLatestMessagesByConversationId(requestDTO.getConversationId(), requestDTO.getLastSentAt());
     }
 
 }

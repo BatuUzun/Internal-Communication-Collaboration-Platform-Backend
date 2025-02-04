@@ -35,7 +35,7 @@ public class ApiGatewayConfiguration {
 	                        .filters(f -> f.filter(jwtAuthFilter)) // Apply JWT filter to this route
 	                        .uri("lb://verification-code-manager"))
 	                
-	                .route(p -> p.path("/chat/**")
+	                .route(p -> p.path("/chat-send/**")
 	                        .uri("lb://chat-send"))
 	                
 	                .route(p -> p.path("/chat-search/**")

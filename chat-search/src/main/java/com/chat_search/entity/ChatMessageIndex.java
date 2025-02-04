@@ -24,7 +24,7 @@ public class ChatMessageIndex {
     private String message;
 
     @Field(type = FieldType.Date)
-    private String sentAt; 
+    private String sentAt;
 
     public ChatMessageIndex() {}
 
