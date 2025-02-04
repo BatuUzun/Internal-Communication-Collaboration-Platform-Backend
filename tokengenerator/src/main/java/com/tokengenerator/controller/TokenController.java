@@ -28,7 +28,7 @@ public class TokenController {
 	public TokenController(TokenService tokenService) {
 		this.tokenService = tokenService;
 	}
- 
+  
 	@PostMapping("/create-token")
 	public ResponseEntity<TokenGenerateResponseDTO> createToken(@Valid @RequestBody TokenGenerateDTO tokenGenerateDTO) {
 	    Token token = tokenService.createToken(tokenGenerateDTO.getUserId(), tokenGenerateDTO.getTokenType());
