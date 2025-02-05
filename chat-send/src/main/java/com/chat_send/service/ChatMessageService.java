@@ -1,24 +1,38 @@
 package com.chat_send.service;
 
-import com.chat_send.entity.ChatMessage;
-import com.chat_send.repository.ChatMessageRepository;
-import com.datastax.oss.driver.api.core.uuid.Uuids;
+import java.time.Instant;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.util.List;
-import java.util.UUID;
+import com.chat_send.constant.Constants;
+import com.chat_send.dto.ChatMessageRequestDTO;
+import com.chat_send.dto.CreateConversationRequest;
+import com.chat_send.entity.ChatMessage;
+import com.chat_send.kafka.ChatMessageProducer;
+import com.chat_send.proxy.ConversationProxy;
+import com.chat_send.repository.ChatMessageRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
 public class ChatMessageService {
 
     @Autowired
     private ChatMessageRepository chatMessageRepository;
+    
+	@Autowired
+	private ChatMessageProducer chatMessageProducer;
+	
+	@Autowired
+	private ConversationProxy conversationProxy;
+	
+    @Autowired
+    private ObjectMapper objectMapper;
+
+
 
     public ChatMessage saveMessage(Long conversationId, Long senderId, Long receiverId, String message) {
         // Generate a TIMEUUID for message_id
-        UUID messageId = Uuids.timeBased();
         Instant sentAt = Instant.now();
 
         // Create a ChatMessage object
@@ -28,11 +42,24 @@ public class ChatMessageService {
         return chatMessageRepository.save(chatMessage);
     }
 
-    public List<ChatMessage> getMessagesByConversationId(Long conversationId) {
-        // Use the findAll() method with filtering if needed
-        return chatMessageRepository.findAll()
-                .stream()
-                .filter(msg -> msg.getId().getConversationId().equals(conversationId))
-                .toList();
+
+    public void processAndSendMessage(ChatMessageRequestDTO chatMessageRequest) throws Exception {
+        if (chatMessageRequest.getConversationId() == null) {
+            CreateConversationRequest createConversationRequest = new CreateConversationRequest(
+                    chatMessageRequest.getReceiverId(), chatMessageRequest.getSenderId());
+
+            chatMessageRequest.setConversationId(conversationProxy.createConversation(createConversationRequest));
+        }
+
+        if (chatMessageRequest.getConversationId() != null) {
+            chatMessageRequest.setSentAt(Instant.now());
+
+            // Use the properly configured ObjectMapper
+            String messageJson = objectMapper.writeValueAsString(chatMessageRequest);
+            chatMessageProducer.sendMessage(Constants.CHAT_TOPIC, messageJson);
+        } else {
+            throw new Exception("ConversationId is null!");
+        }
     }
+
 }

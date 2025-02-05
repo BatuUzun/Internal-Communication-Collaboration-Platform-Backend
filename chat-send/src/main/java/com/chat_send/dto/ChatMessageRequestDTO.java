@@ -17,7 +17,7 @@ public class ChatMessageRequestDTO {
     @NotBlank(message = "Message cannot be empty")
     private String message;
 
-    private Instant sentAt;  // ✅ Add this field
+    private Instant sentAt;  // Add this field
 
     public ChatMessageRequestDTO() {
     }
