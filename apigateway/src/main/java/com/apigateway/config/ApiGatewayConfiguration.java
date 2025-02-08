@@ -44,10 +44,19 @@ public class ApiGatewayConfiguration {
 	                .route(p -> p.path("/conversation/**")
 	                        .uri("lb://conversation"))
 	                
+	                .route(p -> p.path("/chat-send-websocket/**")
+	                        .filters(gatewayFilterSpec -> gatewayFilterSpec
+	                                .rewritePath("/chat-send-websocket/(?<remaining>.*)", "/${remaining}")
+	                                .dedupeResponseHeader("Access-Control-Allow-Origin", "RETAIN_UNIQUE")
+	                                .dedupeResponseHeader("Access-Control-Allow-Credentials", "RETAIN_UNIQUE"))
+	                                //.filter(customLoggingFilter)) // Add any custom filters if necessary
+	                        .uri("lb://chat-send-websocket"))
+
+	                
 	                
 	                .build();
 	    }
-
+	 
     /**
      * Configure global CORS settings at the API Gateway level.
      */
